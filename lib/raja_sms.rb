@@ -1,9 +1,5 @@
 require "raja_sms/version"
 require "raja_sms/configuration"
-require "raja_sms/error"
-require "faraday_middleware/raise_http_exception"
-require "raja_sms/entities/base"
-require "raja_sms/client"
 
 module RajaSms
   class << self

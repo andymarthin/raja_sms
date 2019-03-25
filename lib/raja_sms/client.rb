@@ -1,6 +1,7 @@
 require "faraday"
 require "faraday_middleware"
 require "json"
+require "ostruct"
 
 module RajaSms
   class Client
@@ -19,7 +20,8 @@ module RajaSms
       path = '/sms/api_sms_reguler_send_json.php'
       payload = make_payload(phone_number, message)
       response = make_request(path, 'post', payload)
-      response_body_handle(response.body)
+
+      json_parsed(response.body)
     end
 
     def masking(phone_number, message, sending_time = '')
@@ -27,24 +29,26 @@ module RajaSms
       payload = make_payload(phone_number, message)
       payload[:datapacket].first.merge!({sendingdatetime: sending_time})
       response = make_request(path, 'post', payload)
-      response_body_handle(response.body)
+      json_parsed(response.body)
     end 
 
     def otp(phone_number, message)
       payload = make_payload(phone_number, message)
       path = "/sms/api_sms_otp_send_json.php"
       response = make_request(path, 'post', payload)
-      response_body_handle(response.body)
+
+      json_parsed(response.body)
     end
 
     def balance
       path = "/sms/api_sms_reguler_balance_json.php"
       payload = {apikey: @api_key}
       response = make_request(path, 'post', payload)
-      body = JSON.parse response.body
+      body = json_parsed(response.body)
+      
       attribute = {
-        amount: body["balance_respon"].first["Balance"],
-        expired: body["balance_respon"].first["Expired"]
+        amount: body.Balance,
+        expired: body.Expired
       }
       RajaSms::Entities::Balance.new(attribute)
     end
@@ -82,13 +86,13 @@ module RajaSms
 
       @connection.get endpoint
     end
-
-      def response_body_handle(response)
-        body = JSON.parse response
-        sending_response = body["sending_respon"].first
-        status = sending_response["globalstatus"].to_s
-        raise RajaSms::ResponseError, sending_response["globalstatustext"] if status != "10"
-        sending_response = body["sending_respon"]["datapacket"]
-      end
+    
+    def json_parsed(body)
+      body_parsed = JSON.parse(body, object_class: OpenStruct)
+      response = body_parsed.sending_respon.nil? ? body_parsed.balance_respon.first : body_parsed.sending_respon.first
+      status = response.globalstatus.to_s
+      raise RajaSms::ResponseError, response.globalstatustext if status != "10"
+      response
+    end
   end
 end

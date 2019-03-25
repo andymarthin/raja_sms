@@ -39,14 +39,14 @@ module RajaSms
 
   # Raised when host invalid
   class InvalidHostError < Error
-    def initialize(msg = "Invalid Host End Point")
+    def initialize(msg = "Invalid Host End Point Error")
       super
     end
   end
 
   # Raised when api key invalid
   class InvalidApiKeyError < Error
-    def initialize(msg= "Invalid Api Key")
+    def initialize(msg= "Invalid Api Key Error")
       super
     end
   end
